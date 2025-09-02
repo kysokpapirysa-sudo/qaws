@@ -1,164 +1,193 @@
--- Главное окно
-local player = game.Players.LocalPlayer
-local gui = Instance.new("ScreenGui", player.PlayerGui)
+-- Virta Z Hub
+-- Основной UI
 
-local window = Instance.new("Frame", gui)
-window.Size = UDim2.new(0, 260, 0, 300)
-window.Position = UDim2.new(0, 10, 1, -310)
-window.BackgroundTransparency = 0.3
-window.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+
+-- ScreenGui
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.ResetOnSpawn = false
+
+-- Главное окно
+local mainFrame = Instance.new("Frame", gui)
+mainFrame.Size = UDim2.new(0, 250, 0, 320)
+mainFrame.Position = UDim2.new(0, 10, 1, -330)
+mainFrame.BackgroundTransparency = 0.3
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+
+-- Скролл
+local scroll = Instance.new("ScrollingFrame", mainFrame)
+scroll.Size = UDim2.new(1, 0, 1, -40)
+scroll.Position = UDim2.new(0, 0, 0, 40)
+scroll.CanvasSize = UDim2.new(0, 0, 2, 0)
+scroll.ScrollBarThickness = 6
+scroll.BackgroundTransparency = 1
 
 -- Заголовок
-local titleBar = Instance.new("Frame", window)
-titleBar.Size = UDim2.new(1, 0, 0, 35)
-titleBar.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-titleBar.BackgroundTransparency = 0.2
+local titleBar = Instance.new("Frame", mainFrame)
+titleBar.Size = UDim2.new(1, 0, 0, 40)
+titleBar.BackgroundTransparency = 1
+
+local gradient = Instance.new("UIGradient", titleBar)
+gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(128, 0, 0)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+}
+gradient.Rotation = 0
 
 local title = Instance.new("TextLabel", titleBar)
 title.Size = UDim2.new(1, 0, 1, 0)
-title.BackgroundTransparency = 1
 title.Text = "Virta Z"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.Fantasy
-title.TextSize = 20
+title.TextSize = 22
+title.BackgroundTransparency = 1
 
 -- Координаты над окном
 local coords = Instance.new("TextLabel", gui)
-coords.Size = UDim2.new(0, 260, 0, 20)
-coords.Position = window.Position - UDim2.new(0, 0, 0, 20)
+coords.Size = UDim2.new(0, 250, 0, 20)
+coords.Position = mainFrame.Position - UDim2.new(0, 0, 0, 25)
 coords.BackgroundTransparency = 1
 coords.TextColor3 = Color3.new(0, 0, 0)
-coords.Font = Enum.Font.Fantasy
 coords.TextSize = 14
+coords.Font = Enum.Font.Fantasy
 
--- Обновление координат
 task.spawn(function()
 	while task.wait(0.2) do
-		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local pos = player.Character.HumanoidRootPart.Position
-			coords.Text = string.format("X: %.1f | Y: %.1f | Z: %.1f", pos.X, pos.Y, pos.Z)
+		local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			coords.Text = string.format("X: %.1f | Y: %.1f | Z: %.1f", hrp.Position.X, hrp.Position.Y, hrp.Position.Z)
 		end
 	end
 end)
 
--- Контейнеры вкладок
-local mainTab = Instance.new("Frame", window)
-mainTab.Size = UDim2.new(1, 0, 1, -35)
-mainTab.Position = UDim2.new(0, 0, 0, 35)
-mainTab.BackgroundTransparency = 1
-
-local posesTab = mainTab:Clone()
-posesTab.Parent = window
-posesTab.Visible = false
-
-local advantagesTab = mainTab:Clone()
-advantagesTab.Parent = window
-advantagesTab.Visible = false
-
-local teleportTab = mainTab:Clone()
-teleportTab.Parent = window
-teleportTab.Visible = false
-
--- Функция переключения вкладок
-local function switchTab(from, to)
-	from.Visible = false
-	to.Visible = true
-end
-
--- Кнопки главного меню
-local function makeButton(parent, text, y, callback)
+-- Функция кнопки
+local function createButton(text, parent, callback)
 	local btn = Instance.new("TextButton", parent)
 	btn.Size = UDim2.new(1, -20, 0, 40)
-	btn.Position = UDim2.new(0, 10, 0, y)
-	btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	btn.BackgroundTransparency = 0.2
+	btn.Position = UDim2.new(0, 10, 0, #parent:GetChildren() * 45 - 45)
 	btn.Text = text
-	btn.TextColor3 = Color3.new(1, 1, 1)
 	btn.Font = Enum.Font.Fantasy
 	btn.TextSize = 18
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
+	btn.BackgroundTransparency = 0.2
+	btn.AutoButtonColor = true
 	btn.MouseButton1Click:Connect(callback)
 	return btn
 end
 
-makeButton(mainTab, "Позиции персонажа", 10, function()
-	switchTab(mainTab, posesTab)
-end)
+-- Вкладки
+local sections = {}
 
-makeButton(mainTab, "Преимущества", 60, function()
-	switchTab(mainTab, advantagesTab)
-end)
+local function createSection(name)
+	local frame = Instance.new("Frame", gui)
+	frame.Size = mainFrame.Size
+	frame.Position = mainFrame.Position
+	frame.BackgroundTransparency = 0.3
+	frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	frame.Visible = false
 
-makeButton(mainTab, "Телепорт", 110, function()
-	switchTab(mainTab, teleportTab)
-end)
-
--- Кнопка "Назад"
-local function addBackButton(tab)
-	local back = makeButton(tab, "Назад", 10, function()
-		switchTab(tab, mainTab)
+	local back = createButton("Назад", frame, function()
+		local tw = TweenService:Create(frame, TweenInfo.new(0.3), {Position = frame.Position - UDim2.new(1, 0, 0, 0)})
+		tw:Play()
+		tw.Completed:Wait()
+		frame.Visible = false
+		mainFrame.Visible = true
+		mainFrame.Position = mainFrame.Position + UDim2.new(1, 0, 0, 0)
+		TweenService:Create(mainFrame, TweenInfo.new(0.3), {Position = UDim2.new(0, 10, 1, -330)}):Play()
 	end)
-	return back
+	back.Position = UDim2.new(0, 10, 0, 10)
+
+	sections[name] = frame
+	return frame
 end
 
-addBackButton(posesTab)
-addBackButton(advantagesTab)
-addBackButton(teleportTab)
+-- Позиции
+local poses = createSection("poses")
+local tPoseTrack
 
--- Вкладка "Позиции персонажа"
-makeButton(posesTab, "T-поза", 60, function()
-	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+createButton("Т-поза", poses, function()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local hum = char:FindFirstChildOfClass("Humanoid")
 	if hum then
-		local anim = Instance.new("Animation")
-		anim.AnimationId = "rbxassetid://148840371" -- T-поза
-		local track = hum:FindFirstChildOfClass("Animator"):LoadAnimation(anim)
-		track:Play()
-	end
-end)
-
--- Вкладка "Телепорт"
-local userBox = Instance.new("TextBox", teleportTab)
-userBox.Size = UDim2.new(1, -50, 0, 30)
-userBox.Position = UDim2.new(0, 10, 0, 60)
-userBox.PlaceholderText = "Ник игрока..."
-userBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-userBox.TextColor3 = Color3.new(1, 1, 1)
-
-local goBtn = Instance.new("TextButton", teleportTab)
-goBtn.Size = UDim2.new(0, 30, 0, 30)
-goBtn.Position = UDim2.new(1, -40, 0, 60)
-goBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
-goBtn.Text = ">"
-goBtn.TextColor3 = Color3.new(1, 1, 1)
-goBtn.MouseButton1Click:Connect(function()
-	for _, plr in ipairs(game.Players:GetPlayers()) do
-		if string.find(string.lower(plr.Name), string.lower(userBox.Text)) then
-			if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-				player.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(2, 0, 0)
-			end
+		if tPoseTrack and tPoseTrack.IsPlaying then
+			tPoseTrack:Stop()
+		else
+			local anim = Instance.new("Animation")
+			anim.AnimationId = "rbxassetid://148840371"
+			local animator = hum:FindFirstChildOfClass("Animator") or Instance.new("Animator", hum)
+			tPoseTrack = animator:LoadAnimation(anim)
+			tPoseTrack:Play()
 		end
 	end
 end)
 
-local coordBox = Instance.new("TextBox", teleportTab)
-coordBox.Size = UDim2.new(1, -50, 0, 30)
+-- Телепорт
+local tele = createSection("tele")
+
+local nickBox = Instance.new("TextBox", tele)
+nickBox.Size = UDim2.new(1, -60, 0, 30)
+nickBox.Position = UDim2.new(0, 10, 0, 60)
+nickBox.PlaceholderText = "Ник игрока"
+nickBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+nickBox.TextColor3 = Color3.new(1, 1, 1)
+
+createButton("▶", tele, function()
+	for _,plr in pairs(Players:GetPlayers()) do
+		if plr.Name:lower():sub(1, #nickBox.Text) == nickBox.Text:lower() then
+			local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+			if root and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				LocalPlayer.Character.HumanoidRootPart.CFrame = root.CFrame + Vector3.new(0,2,0)
+			end
+		end
+	end
+end).Size = UDim2.new(0, 40, 0, 30)
+
+local coordBox = Instance.new("TextBox", tele)
+coordBox.Size = UDim2.new(1, -60, 0, 30)
 coordBox.Position = UDim2.new(0, 10, 0, 100)
-coordBox.PlaceholderText = "X,Y,Z..."
-coordBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+coordBox.PlaceholderText = "X,Y,Z"
+coordBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 coordBox.TextColor3 = Color3.new(1, 1, 1)
 
-local coordBtn = goBtn:Clone()
-coordBtn.Parent = teleportTab
-coordBtn.Position = UDim2.new(1, -40, 0, 100)
-coordBtn.MouseButton1Click:Connect(function()
-	local x, y, z = coordBox.Text:match("([^,]+),([^,]+),([^,]+)")
-	if x and y and z then
-		player.Character.HumanoidRootPart.CFrame = CFrame.new(tonumber(x), tonumber(y), tonumber(z))
+createButton("▶", tele, function()
+	local x,y,z = coordBox.Text:match("([^,]+),([^,]+),([^,]+)")
+	if x and y and z and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(tonumber(x), tonumber(y), tonumber(z))
 	end
+end).Size = UDim2.new(0, 40, 0, 30)
+
+createButton("Вперед", tele, function()
+	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		hrp.CFrame = hrp.CFrame * CFrame.new(0,0,-4)
+	end
+end).Position = UDim2.new(0, 10, 0, 150)
+
+-- Преимущества
+local adv = createSection("adv")
+createButton("Скоро...", adv, function() end)
+
+-- Кнопки в главном окне
+createButton("Позиции персонажа", scroll, function()
+	mainFrame.Visible = false
+	poses.Position = mainFrame.Position + UDim2.new(1, 0, 0, 0)
+	poses.Visible = true
+	TweenService:Create(poses, TweenInfo.new(0.3), {Position = UDim2.new(0, 10, 1, -330)}):Play()
 end)
 
-makeButton(teleportTab, "На 4 блока вперед", 150, function()
-	local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	if hrp then
-		hrp.CFrame = hrp.CFrame + hrp.CFrame.LookVector * 4
-	end
+createButton("Телепорт", scroll, function()
+	mainFrame.Visible = false
+	tele.Position = mainFrame.Position + UDim2.new(1, 0, 0, 0)
+	tele.Visible = true
+	TweenService:Create(tele, TweenInfo.new(0.3), {Position = UDim2.new(0, 10, 1, -330)}):Play()
+end)
+
+createButton("Преимущества", scroll, function()
+	mainFrame.Visible = false
+	adv.Position = mainFrame.Position + UDim2.new(1, 0, 0, 0)
+	adv.Visible = true
+	TweenService:Create(adv, TweenInfo.new(0.3), {Position = UDim2.new(0, 10, 1, -330)}):Play()
 end)
