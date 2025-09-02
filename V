@@ -1,102 +1,221 @@
--- Главное окно
+-- Главный экран
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 300, 0, 400)
-MainFrame.Position = UDim2.new(0, 20, 1, -420)
-MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-MainFrame.BackgroundTransparency = 0.3
+local mainFrame = Instance.new("Frame", ScreenGui)
+mainFrame.Size = UDim2.new(0, 300, 0, 400)
+mainFrame.Position = UDim2.new(0, 20, 1, -420)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.BackgroundTransparency = 0.3
+mainFrame.Active = true
+mainFrame.Draggable = true
 
--- Заголовок с градиентом
-local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundTransparency = 1
-Title.Text = "Virta Z"
-Title.Font = Enum.Font.Fantasy
-Title.TextSize = 24
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+-- Скроллинг для главного окна
+local scrolling = Instance.new("ScrollingFrame", mainFrame)
+scrolling.Size = UDim2.new(1, 0, 1, -30)
+scrolling.Position = UDim2.new(0, 0, 0, 30)
+scrolling.CanvasSize = UDim2.new(0, 0, 2, 0)
+scrolling.ScrollBarThickness = 6
+scrolling.BackgroundTransparency = 1
 
-local UIGradient = Instance.new("UIGradient", Title)
-UIGradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(128, 0, 0)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+-- Заголовок
+local titleBar = Instance.new("Frame", mainFrame)
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.Position = UDim2.new(0, 0, 0, 0)
+titleBar.BackgroundTransparency = 0
+
+-- Градиент для заголовка
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(128, 0, 0)), -- бордовый
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))   -- черный
 }
-UIGradient.Rotation = 0
+gradient.Rotation = 0
+gradient.Parent = titleBar
 
--- Скроллинг
-local Scroll = Instance.new("ScrollingFrame", MainFrame)
-Scroll.Size = UDim2.new(1, 0, 1, -40)
-Scroll.Position = UDim2.new(0, 0, 0, 40)
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 600)
-Scroll.ScrollBarThickness = 6
-Scroll.ScrollBarImageColor3 = Color3.fromRGB(100, 0, 0)
+-- Название окна
+local titleLabel = Instance.new("TextLabel", titleBar)
+titleLabel.Size = UDim2.new(1, 0, 1, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Virta Z"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.Fantasy
+titleLabel.TextScaled = true
 
--- Вкладка "Телепорт"
-local TeleportFrame = Instance.new("Frame", Scroll)
-TeleportFrame.Size = UDim2.new(1, -10, 0, 120)
-TeleportFrame.Position = UDim2.new(0, 5, 0, 50)
-TeleportFrame.BackgroundTransparency = 0.4
-TeleportFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+-- Функция для кнопок
+local function createButton(name, pos, parent, callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1, -20, 0, 40)
+    btn.Position = UDim2.new(0, 10, 0, pos)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.Fantasy
+    btn.Text = name
+    btn.TextScaled = true
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
 
-local TeleportLabel = Instance.new("TextLabel", TeleportFrame)
-TeleportLabel.Size = UDim2.new(1, 0, 0, 30)
-TeleportLabel.BackgroundTransparency = 1
-TeleportLabel.Text = "Телепорт"
-TeleportLabel.Font = Enum.Font.Fantasy
-TeleportLabel.TextSize = 20
-TeleportLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+-- Вкладки
+local pages = {}
+local currentPage = scrolling
 
--- Ввод ника
-local NameBox = Instance.new("TextBox", TeleportFrame)
-NameBox.Size = UDim2.new(0.7, -5, 0, 25)
-NameBox.Position = UDim2.new(0, 5, 0, 35)
-NameBox.PlaceholderText = "Введите ник игрока"
-NameBox.BackgroundTransparency = 0.2
-NameBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-NameBox.TextColor3 = Color3.new(1, 1, 1)
+-- Функция открытия страницы
+local function openPage(name)
+    if pages[name] then
+        currentPage.Visible = false
+        pages[name].Visible = true
+        currentPage = pages[name]
+    end
+end
 
-local NameButton = Instance.new("TextButton", TeleportFrame)
-NameButton.Size = UDim2.new(0.3, -10, 0, 25)
-NameButton.Position = UDim2.new(0.7, 5, 0, 35)
-NameButton.Text = "TP"
-NameButton.Font = Enum.Font.Fantasy
-NameButton.TextColor3 = Color3.new(1,1,1)
-NameButton.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+-- Функция возврата
+local function backToMain(page)
+    page.Visible = false
+    scrolling.Visible = true
+    currentPage = scrolling
+end
 
-NameButton.MouseButton1Click:Connect(function()
-	local name = NameBox.Text:lower()
-	for _, plr in pairs(game.Players:GetPlayers()) do
-		if plr.Name:lower():find(name) then
-			local char = game.Players.LocalPlayer.Character
-			if char and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-				char:MoveTo(plr.Character.HumanoidRootPart.Position + Vector3.new(0,2,0))
-			end
-		end
-	end
+-- Страница "Позиции персонажа"
+local posesPage = Instance.new("Frame", mainFrame)
+posesPage.Size = UDim2.new(1, 0, 1, -30)
+posesPage.Position = UDim2.new(0, 0, 0, 30)
+posesPage.Visible = false
+pages["poses"] = posesPage
+
+-- Кнопка назад
+createButton("Назад", 10, posesPage, function()
+    backToMain(posesPage)
 end)
 
--- Ввод координат
-local CoordBox = Instance.new("TextBox", TeleportFrame)
-CoordBox.Size = UDim2.new(0.7, -5, 0, 25)
-CoordBox.Position = UDim2.new(0, 5, 0, 70)
-CoordBox.PlaceholderText = "Введите X,Y,Z"
-CoordBox.BackgroundTransparency = 0.2
-CoordBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-CoordBox.TextColor3 = Color3.new(1, 1, 1)
+-- T-поза (с включением/отключением)
+local isTPosePlaying = false
+local tposeAnim
 
-local CoordButton = Instance.new("TextButton", TeleportFrame)
-CoordButton.Size = UDim2.new(0.3, -10, 0, 25)
-CoordButton.Position = UDim2.new(0.7, 5, 0, 70)
-CoordButton.Text = "TP"
-CoordButton.Font = Enum.Font.Fantasy
-CoordButton.TextColor3 = Color3.new(1,1,1)
-CoordButton.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+createButton("T-поза", 60, posesPage, function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
 
-CoordButton.MouseButton1Click:Connect(function()
-	local x,y,z = CoordBox.Text:match("([^,]+),([^,]+),([^,]+)")
-	if x and y and z then
-		local pos = Vector3.new(tonumber(x), tonumber(y), tonumber(z))
-		local char = game.Players.LocalPlayer.Character
-		if char then char:MoveTo(pos) end
-	end
+    if not isTPosePlaying then
+        local anim = Instance.new("Animation")
+        anim.AnimationId = "rbxassetid://148840371"
+        local track = (hum:FindFirstChildOfClass("Animator") or Instance.new("Animator", hum)):LoadAnimation(anim)
+        track:Play()
+        tposeAnim = track
+        isTPosePlaying = true
+    else
+        if tposeAnim then
+            tposeAnim:Stop()
+            tposeAnim = nil
+        end
+        isTPosePlaying = false
+    end
 end)
 
+-- Страница "Телепорт"
+local tpPage = Instance.new("Frame", mainFrame)
+tpPage.Size = UDim2.new(1, 0, 1, -30)
+tpPage.Position = UDim2.new(0, 0, 0, 30)
+tpPage.Visible = false
+pages["teleport"] = tpPage
+
+createButton("Назад", 10, tpPage, function()
+    backToMain(tpPage)
+end)
+
+-- Телепорт по нику
+local tpNameBox = Instance.new("TextBox", tpPage)
+tpNameBox.Size = UDim2.new(0.7, -20, 0, 30)
+tpNameBox.Position = UDim2.new(0, 10, 0, 60)
+tpNameBox.PlaceholderText = "Ник игрока"
+tpNameBox.Text = ""
+tpNameBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+tpNameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local tpNameBtn = Instance.new("TextButton", tpPage)
+tpNameBtn.Size = UDim2.new(0.25, -10, 0, 30)
+tpNameBtn.Position = UDim2.new(0.7, 0, 0, 60)
+tpNameBtn.Text = "TP"
+tpNameBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+tpNameBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpNameBtn.Font = Enum.Font.Fantasy
+tpNameBtn.TextScaled = true
+
+tpNameBtn.MouseButton1Click:Connect(function()
+    local namePart = tpNameBox.Text:lower()
+    for _, plr in ipairs(game.Players:GetPlayers()) do
+        if plr.Name:lower():find(namePart) then
+            local char = game.Players.LocalPlayer.Character
+            if char and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                char:MoveTo(plr.Character.HumanoidRootPart.Position)
+            end
+        end
+    end
+end)
+
+-- Телепорт по координатам
+local tpCoordsBox = Instance.new("TextBox", tpPage)
+tpCoordsBox.Size = UDim2.new(0.7, -20, 0, 30)
+tpCoordsBox.Position = UDim2.new(0, 10, 0, 100)
+tpCoordsBox.PlaceholderText = "X,Y,Z"
+tpCoordsBox.Text = ""
+tpCoordsBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+tpCoordsBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local tpCoordsBtn = Instance.new("TextButton", tpPage)
+tpCoordsBtn.Size = UDim2.new(0.25, -10, 0, 30)
+tpCoordsBtn.Position = UDim2.new(0.7, 0, 0, 100)
+tpCoordsBtn.Text = "TP"
+tpCoordsBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+tpCoordsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpCoordsBtn.Font = Enum.Font.Fantasy
+tpCoordsBtn.TextScaled = true
+
+tpCoordsBtn.MouseButton1Click:Connect(function()
+    local coords = {}
+    for num in tpCoordsBox.Text:gmatch("[^,]+") do
+        table.insert(coords, tonumber(num))
+    end
+    if #coords == 3 then
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char:MoveTo(Vector3.new(coords[1], coords[2], coords[3]))
+        end
+    end
+end)
+
+-- Телепорт на 4 блока вперед
+createButton("TP вперёд", 140, tpPage, function()
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        local forward = hrp.CFrame.LookVector * 4
+        char:MoveTo(hrp.Position + forward)
+    end
+end)
+
+-- Кнопки главного меню
+createButton("Позиции персонажа", 10, scrolling, function()
+    openPage("poses")
+end)
+
+createButton("Телепорт", 60, scrolling, function()
+    openPage("teleport")
+end)
+
+-- Вывод координат над окном
+local coordsLabel = Instance.new("TextLabel", ScreenGui)
+coordsLabel.Size = UDim2.new(0, 300, 0, 20)
+coordsLabel.Position = UDim2.new(0, 20, 1, -440)
+coordsLabel.BackgroundTransparency = 1
+coordsLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
+coordsLabel.Font = Enum.Font.Fantasy
+coordsLabel.TextScaled = true
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local pos = char.HumanoidRootPart.Position
+        coordsLabel.Text = string.format("X: %d, Y: %d, Z: %d", pos.X, pos.Y, pos.Z)
+    end
+end)
