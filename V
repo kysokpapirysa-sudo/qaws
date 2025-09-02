@@ -1,170 +1,164 @@
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local player = Players.LocalPlayer
-
 -- Главное окно
-local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-ScreenGui.ResetOnSpawn = false
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player.PlayerGui)
 
-local window = Instance.new("Frame", ScreenGui)
-window.Size = UDim2.new(0, 300, 0, 250)
-window.Position = UDim2.new(0, 20, 1, -270)
+local window = Instance.new("Frame", gui)
+window.Size = UDim2.new(0, 260, 0, 300)
+window.Position = UDim2.new(0, 10, 1, -310)
 window.BackgroundTransparency = 0.3
-window.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+window.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 
--- Заголовок с градиентом
+-- Заголовок
 local titleBar = Instance.new("Frame", window)
-titleBar.Size = UDim2.new(1, 0, 0, 30)
-local gradient = Instance.new("UIGradient", titleBar)
-gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(128, 0, 0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
-}
-local titleLabel = Instance.new("TextLabel", titleBar)
-titleLabel.Size = UDim2.new(1, 0, 1, 0)
-titleLabel.Text = "Virta Z"
-titleLabel.TextColor3 = Color3.new(1,1,1)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Font = Enum.Font.Fantasy
-titleLabel.TextScaled = true
+titleBar.Size = UDim2.new(1, 0, 0, 35)
+titleBar.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+titleBar.BackgroundTransparency = 0.2
 
--- Позиция игрока над окном
-local coordsLabel = Instance.new("TextLabel", ScreenGui)
-coordsLabel.Position = UDim2.new(0, 20, 1, -300)
-coordsLabel.Size = UDim2.new(0, 300, 0, 20)
-coordsLabel.TextColor3 = Color3.new(0,0,0)
-coordsLabel.BackgroundTransparency = 1
-coordsLabel.TextScaled = true
+local title = Instance.new("TextLabel", titleBar)
+title.Size = UDim2.new(1, 0, 1, 0)
+title.BackgroundTransparency = 1
+title.Text = "Virta Z"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.Fantasy
+title.TextSize = 20
 
+-- Координаты над окном
+local coords = Instance.new("TextLabel", gui)
+coords.Size = UDim2.new(0, 260, 0, 20)
+coords.Position = window.Position - UDim2.new(0, 0, 0, 20)
+coords.BackgroundTransparency = 1
+coords.TextColor3 = Color3.new(0, 0, 0)
+coords.Font = Enum.Font.Fantasy
+coords.TextSize = 14
+
+-- Обновление координат
 task.spawn(function()
-	while true do
-		local char = player.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
-			local pos = char.HumanoidRootPart.Position
-			coordsLabel.Text = string.format("X: %.1f | Y: %.1f | Z: %.1f", pos.X, pos.Y, pos.Z)
+	while task.wait(0.2) do
+		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			local pos = player.Character.HumanoidRootPart.Position
+			coords.Text = string.format("X: %.1f | Y: %.1f | Z: %.1f", pos.X, pos.Y, pos.Z)
 		end
-		task.wait(0.5)
 	end
 end)
 
--- Контейнер для вкладок
-local mainFrame = Instance.new("Frame", window)
-mainFrame.Size = UDim2.new(1, 0, 1, -30)
-mainFrame.Position = UDim2.new(0,0,0,30)
-mainFrame.BackgroundTransparency = 1
+-- Контейнеры вкладок
+local mainTab = Instance.new("Frame", window)
+mainTab.Size = UDim2.new(1, 0, 1, -35)
+mainTab.Position = UDim2.new(0, 0, 0, 35)
+mainTab.BackgroundTransparency = 1
 
--- Функция анимации перелистывания
-local function switchTab(tab)
-	for _,child in ipairs(window:GetChildren()) do
-		if child:IsA("Frame") and child ~= titleBar then
-			child.Visible = false
-		end
-	end
-	tab.Visible = true
-	tab.Position = UDim2.new(1,0,0,30)
-	TweenService:Create(tab, TweenInfo.new(0.3), {Position = UDim2.new(0,0,0,30)}):Play()
-end
+local posesTab = mainTab:Clone()
+posesTab.Parent = window
+posesTab.Visible = false
 
--- Функция возврата
-local function goBack(tab)
-	TweenService:Create(tab, TweenInfo.new(0.3), {Position = UDim2.new(1,0,0,30)}):Play()
-	task.delay(0.3, function()
-		tab.Visible = false
-		mainFrame.Visible = true
-	end)
+local advantagesTab = mainTab:Clone()
+advantagesTab.Parent = window
+advantagesTab.Visible = false
+
+local teleportTab = mainTab:Clone()
+teleportTab.Parent = window
+teleportTab.Visible = false
+
+-- Функция переключения вкладок
+local function switchTab(from, to)
+	from.Visible = false
+	to.Visible = true
 end
 
 -- Кнопки главного меню
-local positionsBtn = Instance.new("TextButton", mainFrame)
-positionsBtn.Size = UDim2.new(1, -10, 0, 40)
-positionsBtn.Position = UDim2.new(0,5,0,5)
-positionsBtn.Text = "Позиции персонажа"
-positionsBtn.BackgroundTransparency = 0.3
-positionsBtn.Font = Enum.Font.Fantasy
-positionsBtn.TextScaled = true
+local function makeButton(parent, text, y, callback)
+	local btn = Instance.new("TextButton", parent)
+	btn.Size = UDim2.new(1, -20, 0, 40)
+	btn.Position = UDim2.new(0, 10, 0, y)
+	btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	btn.BackgroundTransparency = 0.2
+	btn.Text = text
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.Font = Enum.Font.Fantasy
+	btn.TextSize = 18
+	btn.MouseButton1Click:Connect(callback)
+	return btn
+end
 
-local tpBtn = Instance.new("TextButton", mainFrame)
-tpBtn.Size = UDim2.new(1, -10, 0, 40)
-tpBtn.Position = UDim2.new(0,5,0,50)
-tpBtn.Text = "Телепорт"
-tpBtn.BackgroundTransparency = 0.3
-tpBtn.Font = Enum.Font.Fantasy
-tpBtn.TextScaled = true
-
--- Вкладка позиций
-local posTab = Instance.new("Frame", window)
-posTab.Size = UDim2.new(1,0,1,-30)
-posTab.Position = UDim2.new(1,0,0,30)
-posTab.Visible = false
-posTab.BackgroundTransparency = 1
-
-local tposeBtn = Instance.new("TextButton", posTab)
-tposeBtn.Size = UDim2.new(1,-10,0,40)
-tposeBtn.Position = UDim2.new(0,5,0,5)
-tposeBtn.Text = "Позиция 1"
-tposeBtn.BackgroundTransparency = 0.3
-tposeBtn.Font = Enum.Font.Fantasy
-tposeBtn.TextScaled = true
-
-local back1 = Instance.new("TextButton", posTab)
-back1.Size = UDim2.new(1,-10,0,30)
-back1.Position = UDim2.new(0,5,1,-35)
-back1.Text = "Назад"
-back1.BackgroundTransparency = 0.3
-back1.TextScaled = true
-
--- Вкладка телепорта
-local tpTab = Instance.new("Frame", window)
-tpTab.Size = UDim2.new(1,0,1,-30)
-tpTab.Position = UDim2.new(1,0,0,30)
-tpTab.Visible = false
-tpTab.BackgroundTransparency = 1
-
-local tpLabel = Instance.new("TextLabel", tpTab)
-tpLabel.Size = UDim2.new(1,-10,0,40)
-tpLabel.Position = UDim2.new(0,5,0,5)
-tpLabel.Text = "Телепорт (позже функции)"
-tpLabel.BackgroundTransparency = 1
-tpLabel.TextScaled = true
-
-local back2 = Instance.new("TextButton", tpTab)
-back2.Size = UDim2.new(1,-10,0,30)
-back2.Position = UDim2.new(0,5,1,-35)
-back2.Text = "Назад"
-back2.BackgroundTransparency = 0.3
-back2.TextScaled = true
-
--- Связки кнопок
-positionsBtn.MouseButton1Click:Connect(function()
-	mainFrame.Visible = false
-	switchTab(posTab)
-end)
-tpBtn.MouseButton1Click:Connect(function()
-	mainFrame.Visible = false
-	switchTab(tpTab)
-end)
-back1.MouseButton1Click:Connect(function()
-	goBack(posTab)
-end)
-back2.MouseButton1Click:Connect(function()
-	goBack(tpTab)
+makeButton(mainTab, "Позиции персонажа", 10, function()
+	switchTab(mainTab, posesTab)
 end)
 
--- Анимация (Т-поза)
-local playing = false
-tposeBtn.MouseButton1Click:Connect(function()
-	local char = player.Character or player.CharacterAdded:Wait()
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if not hum then return end
-	if not playing then
+makeButton(mainTab, "Преимущества", 60, function()
+	switchTab(mainTab, advantagesTab)
+end)
+
+makeButton(mainTab, "Телепорт", 110, function()
+	switchTab(mainTab, teleportTab)
+end)
+
+-- Кнопка "Назад"
+local function addBackButton(tab)
+	local back = makeButton(tab, "Назад", 10, function()
+		switchTab(tab, mainTab)
+	end)
+	return back
+end
+
+addBackButton(posesTab)
+addBackButton(advantagesTab)
+addBackButton(teleportTab)
+
+-- Вкладка "Позиции персонажа"
+makeButton(posesTab, "T-поза", 60, function()
+	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	if hum then
 		local anim = Instance.new("Animation")
-		anim.AnimationId = "rbxassetid://148840371"
+		anim.AnimationId = "rbxassetid://148840371" -- T-поза
 		local track = hum:FindFirstChildOfClass("Animator"):LoadAnimation(anim)
 		track:Play()
-		playing = track
-	else
-		playing:Stop()
-		playing = false
 	end
 end)
 
+-- Вкладка "Телепорт"
+local userBox = Instance.new("TextBox", teleportTab)
+userBox.Size = UDim2.new(1, -50, 0, 30)
+userBox.Position = UDim2.new(0, 10, 0, 60)
+userBox.PlaceholderText = "Ник игрока..."
+userBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+userBox.TextColor3 = Color3.new(1, 1, 1)
+
+local goBtn = Instance.new("TextButton", teleportTab)
+goBtn.Size = UDim2.new(0, 30, 0, 30)
+goBtn.Position = UDim2.new(1, -40, 0, 60)
+goBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
+goBtn.Text = ">"
+goBtn.TextColor3 = Color3.new(1, 1, 1)
+goBtn.MouseButton1Click:Connect(function()
+	for _, plr in ipairs(game.Players:GetPlayers()) do
+		if string.find(string.lower(plr.Name), string.lower(userBox.Text)) then
+			if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+				player.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(2, 0, 0)
+			end
+		end
+	end
+end)
+
+local coordBox = Instance.new("TextBox", teleportTab)
+coordBox.Size = UDim2.new(1, -50, 0, 30)
+coordBox.Position = UDim2.new(0, 10, 0, 100)
+coordBox.PlaceholderText = "X,Y,Z..."
+coordBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+coordBox.TextColor3 = Color3.new(1, 1, 1)
+
+local coordBtn = goBtn:Clone()
+coordBtn.Parent = teleportTab
+coordBtn.Position = UDim2.new(1, -40, 0, 100)
+coordBtn.MouseButton1Click:Connect(function()
+	local x, y, z = coordBox.Text:match("([^,]+),([^,]+),([^,]+)")
+	if x and y and z then
+		player.Character.HumanoidRootPart.CFrame = CFrame.new(tonumber(x), tonumber(y), tonumber(z))
+	end
+end)
+
+makeButton(teleportTab, "На 4 блока вперед", 150, function()
+	local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		hrp.CFrame = hrp.CFrame + hrp.CFrame.LookVector * 4
+	end
+end)
