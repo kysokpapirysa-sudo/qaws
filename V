@@ -1,29 +1,30 @@
--- Основное окно
 local player = game.Players.LocalPlayer
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "VirtaZGui"
-gui.ResetOnSpawn = false
-
+local playerGui = player:WaitForChild("PlayerGui")
 local TweenService = game:GetService("TweenService")
 
--- Функция быстрой сборки объектов
+-- Быстрое создание объектов
 local function create(class, props, parent)
     local obj = Instance.new(class)
-    for k,v in pairs(props) do obj[k] = v end
+    for k,v in props do obj[k] = v end
     obj.Parent = parent
     return obj
 end
 
--- Главное окно (снизу слева)
-local window = create("Frame", {
-    Size = UDim2.new(0, 260, 0, 180),
-    Position = UDim2.new(0, 10, 1, -190),
-    BackgroundColor3 = Color3.fromRGB(255,255,255),
-    BackgroundTransparency = 0.5,
-    BorderSizePixel = 0
+-- ScreenGui
+local gui = create("ScreenGui", {Name="VirtaZGui", ResetOnSpawn=false}, playerGui)
+
+-- Главное окно
+local window = create("ScrollingFrame", {
+    Size=UDim2.new(0,270,0,180),
+    Position=UDim2.new(0,10,1,-190),
+    CanvasSize=UDim2.new(0,0,1,0),
+    ScrollBarThickness=6,
+    BackgroundColor3=Color3.new(1,1,1),
+    BackgroundTransparency=0.5,
+    BorderSizePixel=0
 }, gui)
 
--- Верхняя плашка с градиентом и названием
+-- Верхняя плашка
 local top = create("Frame", {Size=UDim2.new(1,0,0,30), BorderSizePixel=0}, window)
 local grad = Instance.new("UIGradient", top)
 grad.Color = ColorSequence.new{
@@ -33,99 +34,122 @@ grad.Color = ColorSequence.new{
 create("TextLabel", {
     Size=UDim2.new(1,0,1,0),
     BackgroundTransparency=1,
-    Text="Virta Z",
-    TextColor3=Color3.new(1,1,1),
-    Font=Enum.Font.Fantasy,
-    TextScaled=true
+    Text="Virta Z", TextColor3=Color3.new(1,1,1),
+    Font=Enum.Font.Fantasy, TextScaled=true
 }, top)
 
--- Скроллинг внутри окна
-local scroll = create("ScrollingFrame", {
-    Size=UDim2.new(1,0,1,-30), Position=UDim2.new(0,0,0,30),
-    BackgroundTransparency=1, ScrollBarThickness=6, CanvasSize=UDim2.new(0,0,0,300)
-}, window)
+-- Контейнер для кнопок
+local holder = create("Frame", {Size=UDim2.new(1,0,1,-30), Position=UDim2.new(0,0,0,30), BackgroundTransparency=1}, window)
+local list = Instance.new("UIListLayout", holder)
+list.Padding = UDim.new(0,5); list.FillDirection = Enum.FillDirection.Vertical
 
--- Кнопки для вкладок
-local btnHeight = 40
-local function makeBtn(text, y)
+-- Универсальная кнопка
+local function addButton(name, func)
     return create("TextButton", {
-        Size=UDim2.new(0.9,0,0,btnHeight), Position=UDim2.new(0.05,0,0,y),
+        Size=UDim2.new(1,-10,0,35),
         BackgroundColor3=Color3.fromRGB(200,200,200),
-        Text=text, TextColor3=Color3.fromRGB(0,0,0),
-        Font=Enum.Font.Fantasy, TextScaled=true
-    }, scroll)
+        Font=Enum.Font.Fantasy, Text=name,
+        TextColor3=Color3.new(0,0,0), TextScaled=true
+    }, holder).MouseButton1Click:Connect(func)
 end
 
-local posesBtn = makeBtn("Позиции персонажа", 0)
-local perksBtn = makeBtn("Преимущества", 0.2)
-local tpBtn    = makeBtn("Телепорт", 0.4)
-
--- Вкладки (отдельные страницы)
-local tabs = {}
-local function makeTab(name)
+-- Вкладка
+local function makeTab(title)
     local tab = create("Frame", {
-        Size=UDim2.new(1,0,1,-30), Position=UDim2.new(0,0,0,30),
-        BackgroundTransparency=0.5, Visible=false
-    }, window)
-    tabs[name] = tab
+        Size=window.Size, Position=window.Position,
+        BackgroundColor3=Color3.new(1,1,1),
+        BackgroundTransparency=0.4, Visible=false
+    }, gui)
 
-    -- Кнопка назад
-    local back = makeBtn("< Назад", 0)
-    back.Parent = tab
+    local back = create("TextButton", {
+        Size=UDim2.new(0,50,0,25), Position=UDim2.new(0,10,0,10),
+        BackgroundColor3=Color3.fromRGB(100,100,100),
+        Text="<", TextScaled=true, TextColor3=Color3.new(1,1,1)
+    }, tab)
+
     back.MouseButton1Click:Connect(function()
-        TweenService:Create(tab, TweenInfo.new(0.3), {Position=UDim2.new(-1,0,0,30)}):Play()
-        task.delay(0.3,function() tab.Visible=false; scroll.Visible=true end)
+        TweenService:Create(tab,TweenInfo.new(0.3),{Position=UDim2.new(-1,0,tab.Position.Y.Scale,tab.Position.Y.Offset)}):Play()
+        task.delay(0.3,function() tab.Visible=false; window.Visible=true end)
     end)
+
+    local label = create("TextLabel", {
+        Size=UDim2.new(1,0,0,30), Position=UDim2.new(0,0,0,5),
+        BackgroundTransparency=1, Text=title,
+        Font=Enum.Font.Fantasy, TextScaled=true, TextColor3=Color3.new(0,0,0)
+    }, tab)
 
     return tab
 end
 
-local posesTab = makeTab("poses")
-local perksTab = makeTab("perks")
-local tpTab    = makeTab("teleport")
+-- Анимации
+local animTab = makeTab("Позиции персонажа")
+create("TextButton", {
+    Size=UDim2.new(0,140,0,30), Position=UDim2.new(0,65,0,50),
+    BackgroundColor3=Color3.fromRGB(220,180,180),
+    Text="Т-позиция", Font=Enum.Font.Fantasy, TextScaled=true,
+    TextColor3=Color3.new(0,0,0)
+}, animTab).MouseButton1Click:Connect(function()
+    local src = game:HttpGet("https://raw.githubusercontent.com/kysokpapirysa-sudo/qaws/refs/heads/main/tpose.lua")
+    loadstring(src)()
+end)
 
--- Открытие вкладки
-local function openTab(tab)
-    scroll.Visible = false
-    tab.Visible = true
-    tab.Position = UDim2.new(1,0,0,30)
-    TweenService:Create(tab, TweenInfo.new(0.3), {Position=UDim2.new(0,0,0,30)}):Play()
-end
-
-posesBtn.MouseButton1Click:Connect(function() openTab(posesTab) end)
-perksBtn.MouseButton1Click:Connect(function() openTab(perksTab) end)
-tpBtn.MouseButton1Click:Connect(function() openTab(tpTab) end)
-
--- Пример кнопки внутри "Позиции персонажа"
-local pose1 = makeBtn("Поза 1", 0.2)
-pose1.Parent = posesTab
-pose1.MouseButton1Click:Connect(function()
-    local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-    if hum then
-        local anim = Instance.new("Animation")
-        anim.AnimationId = "rbxassetid://148840371"
-        local track = hum:FindFirstChildOfClass("Animator"):LoadAnimation(anim)
-        track:Play()
+-- Телепорт
+local tpTab = makeTab("Телепорт")
+-- Поле для ника
+local nickBox = create("TextBox", {
+    Size=UDim2.new(0.7,0,0,25), Position=UDim2.new(0.05,0,0.2,0),
+    BackgroundColor3=Color3.fromRGB(240,240,240), PlaceholderText="Ник игрока"
+}, tpTab)
+create("TextButton", {
+    Size=UDim2.new(0,25,0,25), Position=UDim2.new(0.8,0,0.2,0),
+    BackgroundColor3=Color3.fromRGB(0,100,255)
+}, tpTab).MouseButton1Click:Connect(function()
+    local targetName = nickBox.Text:lower()
+    for _,plr in ipairs(game.Players:GetPlayers()) do
+        if plr.Name:lower():sub(1,#targetName) == targetName then
+            player.Character:PivotTo(plr.Character:GetPivot()+CFrame.new(2,0,0))
+            break
+        end
     end
 end)
 
--- Вкладка "Телепорт"
-local nameBox = create("TextBox", {
-    Size=UDim2.new(0.8,0,0,30), Position=UDim2.new(0.1,0,0.2,0),
-    PlaceholderText="Ник игрока", Text="", BackgroundColor3=Color3.fromRGB(230,230,255)
-}, tpTab)
-
+-- Поле для координат
 local coordBox = create("TextBox", {
-    Size=UDim2.new(0.8,0,0,30), Position=UDim2.new(0.1,0,0.4,0),
-    PlaceholderText="x,y,z", Text="", BackgroundColor3=Color3.fromRGB(230,230,255)
+    Size=UDim2.new(0.7,0,0,25), Position=UDim2.new(0.05,0,0.4,0),
+    BackgroundColor3=Color3.fromRGB(240,240,240), PlaceholderText="x,y,z"
 }, tpTab)
-
-local tpForward = makeBtn("Телепорт вперёд", 0.6)
-tpForward.Parent = tpTab
-tpForward.MouseButton1Click:Connect(function()
-    local char = player.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame *= CFrame.new(0,0,-4)
+create("TextButton", {
+    Size=UDim2.new(0,25,0,25), Position=UDim2.new(0.8,0,0.4,0),
+    BackgroundColor3=Color3.fromRGB(0,100,255)
+}, tpTab).MouseButton1Click:Connect(function()
+    local x,y,z = coordBox.Text:match("([^,]+),([^,]+),([^,]+)")
+    if x and y and z then
+        player.Character:PivotTo(CFrame.new(tonumber(x),tonumber(y),tonumber(z)))
     end
 end)
 
+-- Кнопка вперед
+create("TextButton", {
+    Size=UDim2.new(0.9,0,0,30), Position=UDim2.new(0.05,0,0.65,0),
+    BackgroundColor3=Color3.fromRGB(180,220,250),
+    Text="Вперед", Font=Enum.Font.Fantasy, TextScaled=true,
+    TextColor3=Color3.new(0,0,0)
+}, tpTab).MouseButton1Click:Connect(function()
+    local char = player.Character
+    if char then
+        char:PivotTo(char:GetPivot() * CFrame.new(0,0,-4))
+    end
+end)
+
+-- Подключаем кнопки
+addButton("Позиции персонажа", function()
+    window.Visible=false; animTab.Visible=true
+    animTab.Position = UDim2.new(1,0,window.Position.Y.Scale,window.Position.Y.Offset)
+    TweenService:Create(animTab,TweenInfo.new(0.3),{Position=window.Position}):Play()
+end)
+
+addButton("Телепорт", function()
+    window.Visible=false; tpTab.Visible=true
+    tpTab.Position = UDim2.new(1,0,window.Position.Y.Scale,window.Position.Y.Offset)
+    TweenService:Create(tpTab,TweenInfo.new(0.3),{Position=window.Position}):Play()
+end)
